@@ -40,17 +40,43 @@ public class ThreadPoolEchoServer implements Runnable{
         System.out.println(Thread.currentThread() + " 스레드 접속");
         try (
                 BufferedReader br = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)
+                PrintWriter pw = new PrintWriter(clientSocket.getOutputStream(), true)
         ) {
-            String inputLine;
-            while ((inputLine = br.readLine()) != null) {
-                StringTokenizer st = new StringTokenizer(inputLine, "+-*/", false);
-                System.out.println(Thread.currentThread() +" 클라이언트가 보낸 메세지 : " + inputLine);
-                while (st.hasMoreTokens()) {
-                    // out.println(st.nextToken());
-                    int a = Integer.parseInt(st.nextToken());
-                    int b = Integer.parseInt(st.nextToken());
-                    System.out.println("계산 결과 : " + (a + b));
+            String line;
+            while ((line = br.readLine()) != null) {
+                System.out.println(Thread.currentThread() + " 클라이언트가 보낸 메세지 : " + line);
+                try {
+                    StringTokenizer st = new StringTokenizer(line, "+-*/", true);  // 연산자를 파악하기 위해 delimiter에 연산자를 포함.
+                    int result = 0, operand = 0;
+                    char operator = '+';
+
+                    while (st.hasMoreTokens()) {
+                        String token = st.nextToken().trim();
+
+                        if ("+-*/".indexOf(token) >= 0) {
+                            operator = token.charAt(0);
+                        } else {
+                            operand = Integer.parseInt(token);
+                        }
+                        switch (operator) {
+                            case '+':
+                                result = result + operand;
+                                break;
+                            case '-':
+                                result = result - operand;
+                                break;
+                            case '*':
+                                result = result * operand;
+                                break;
+                            case '/':
+                                result = result / operand;
+                                break;
+                        }
+                    }
+                    pw.println(line + "="+ result);
+                }
+                catch (NumberFormatException err){
+                    pw.println("유효하지 않은 입력 값 입니다. 숫자를 입력해주세요.");
                 }
             }
             System.out.println(Thread.currentThread() +" 클라이언트가 종료됨"); }
